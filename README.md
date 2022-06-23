@@ -12,3 +12,8 @@ Vimのテキストを縱書きにして 編集します
 一文字消去しますが 挿入モードに移行してしまひます  
 
 このスクリプトは vim9scriptでつくりました  
+
+プラグインマネージャーの dein を使ふ場合は  
+.vimrc に  
+call dein#add('syouzan420/VerticalVim')  
+を加へてください  
