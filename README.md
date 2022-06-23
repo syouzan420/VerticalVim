@@ -17,3 +17,5 @@ Vimのテキストを縱書きにして 編集します
 .vimrc に  
 call dein#add('syouzan420/VerticalVim')  
 を加へてください  
+コマンド :call dein#install()  
+で インストールできると思ひます
