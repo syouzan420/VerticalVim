@@ -426,9 +426,9 @@ def ta#TateStart()
   map(bls, (_, v) => v .. ' ')   # add space to all elements of the list 
   command! Tateq call TateEnd()
   command! Tatec call TateChange()
-  command! Tatei call IndexStart()
-  command! Tatea call IndexAdd()
-  command! Tater call RubiStart()
+  command! Tatei call TateIndexStart()
+  command! Tatea call TateIndexAdd()
+  command! Tater call TateRubiStart()
   command! Taten call NewLine()
   command! Tated call DelLetter()
   y = line('.')       # the current line which is on the cursor 
@@ -466,7 +466,33 @@ def DelLetter()
   UpdateText(false)
 enddef
 
-def RubiStart()
+def AppendRubi(moji: string)
+  var l = strchars(moji)
+  var rb = input(moji .. ':')
+  if rb == ' '
+    rb = ''
+  endif
+  var rblist = split(rb, ' ')
+  var lr = len(rblist)
+  var str = ''
+  var i = 0
+  var irb = ''
+  while l > 0
+    if lr > i
+      irb = '：' .. rblist[i] .. '：'
+    else
+      irb = ''
+    endif
+    str = str .. strcharpart(moji, i, 1) .. irb 
+    i = i + 1
+    l = l - 1
+  endwhile
+  @" = str
+  feedkeys('P') 
+  echo ".. :push enter"
+enddef
+
+def TateRubiStart()
   var rg = @"
   var rgl = split(rg, '\n')
   map(rgl, (_, v) => slice(v, -1))
@@ -480,7 +506,8 @@ def RubiStart()
     pl = pl - 1
   endif
   TateChange()
-  rubi#RubiStart()
+  command! -nargs=1 Rubia call s:AppendRubi(<args>)
+  vnoremap <buffer> r d<Esc>:Rubia '<C-R>"'<CR> 
   if chlen == 1
     feedkeys('vr')
   elseif chlen == 2
@@ -488,30 +515,117 @@ def RubiStart()
   else
     feedkeys(lmov .. 'hv' .. (chlen - 1) .. 'lr')
   endif
-  nnoremap <buffer> t :Ta<CR>
+  nnoremap <buffer> <CR> :Ta<CR>
 enddef
 
-def IndexStart()
+def IndexLine(ind: number, str: string): list<any>
+  var n = strchars(str)
+  var rin = 0
+  var rsl = ""
+  var tstr = str
+  var lch = ""
+  while n > 0
+    n = n - 1
+    lch = slice(tstr, -1)
+    if lch == ' '
+      tstr = slice(tstr, 0, n)
+    elseif lch == ':'
+      rin = ind
+      rsl = tstr
+    else
+      n = 0
+    endif
+  endwhile
+  return [rin, rsl] 
+enddef
+
+def IndexText(ls: list<string>): list<any>
+  var i = 1
+  var rl = []
+  for val in ls
+    rl = IndexLine(i, val)
+    if rl[1] != ""
+      add(iils, i)
+      add(inls, val)
+    endif
+    i += 1
+  endfor
+  return [iils, inls]
+enddef
+
+def LineType(str: string): string 
+  var n = strchars(str)
+  var tstr = str
+  var lch = ""
+  while n > 0
+    lch = slice(tstr, -1)
+    if lch == ' '
+      tstr = slice(tstr, 0, n)
+      n = n - 1
+    elseif lch == ':'
+      n = -2
+    else
+      n = -1 
+    endif
+  endwhile
+  if n == 0
+    tstr = ' '
+  elseif n == -1
+    tstr = ''
+  endif
+  return tstr
+enddef
+
+def TateIndexShow()
+  iils = []
+  inls = []
+  bls = getline(1, line("$"))
+  enew!
+  var result = IndexText(bls)
+  iils = result[0]
+  inls = result[1]
+  append(0, inls)
+  cursor(1, 1)
+enddef
+
+def TateIndexStart()
   TateChange()
-  index#IndexStart()
-  execute "Indexs"
+  TateIndexShow()
   ta#TateStart()
-  command! Tatej call IndexJump()
+  command! Tatej call TateIndexJump()
   nnoremap <buffer> [ :Tatej
 enddef
 
-def IndexAdd()
+def TateIndexAdd()
   TateChange()
-  index#IndexStart()
-  execute "Indexa"
+  var ind = input('Index Name = ')
+  var lnum = line('.')
+  var li = getline(lnum)
+  var tstr = LineType(li) 
+  while tstr == '' 
+    lnum -= 1
+    if lnum == 0
+      tstr = ' '
+    else
+      li = getline(lnum)
+      tstr = LineType(li)
+    endif
+  endwhile
+  if tstr == ' '
+    append(lnum, (ind .. ':'))
+  else
+    setline(lnum, (ind .. ':'))
+  endif
   ta#TateStart()
 enddef
 
-def IndexJump()
+def TateIndexJump()
   TateEnd()
-  execute "Indexs"
+  TateIndexShow() 
   cursor(pl, 1)
-  execute "Indexj"
+  var l = line('.')
+  bd!
+  cursor(iils[l - 1], 1)
   delcommand Tatej
   ta#TateStart()
 enddef
@@ -558,3 +672,5 @@ var scrl: number
 var msc: number
 var oln: list<number>
 var bcr = false     # whether Enter Key is pushed
+var iils: list<number>
+var inls: list<string>
