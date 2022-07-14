@@ -423,7 +423,7 @@ enddef
 
 def ta#TateStart()
   bls = getline(1, line("$"))  # set all lines of the original buffer to a list 
-  map(bls, (_, v) => v .. ' ')   # add space to all elements of the list 
+  #map(bls, (_, v) => v .. ' ')   # add space to all elements of the list 
   command! Tateq call TateEnd()
   command! Tatec call TateChange()
   command! Tatei call TateIndexStart()
@@ -640,6 +640,8 @@ def TateChange()
   normal 1G
   normal dG 
   append(0, bls)     # append new data
+  normal G
+  normal dd          # delete the last line
   setcursorcharpos(y, x)
   delcommand Tateq
   delcommand Tatec
