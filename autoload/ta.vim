@@ -4,6 +4,10 @@ scriptencoding utf-8
 # MAINTAINER: yokoP
 # License: This file is placed in the public domain.
 
+if exists('g:loaded_ta')
+  finish
+endif
+
 # CHANGE TO TATE -------------------------------------------------
 def ChangeToTate()
   MakeNewList(h - 2)
@@ -421,7 +425,7 @@ def MoveCursor()
   setline(1, status)
 enddef
 
-def ta#TateStart()
+def TateStart()
   bls = getline(1, line("$"))  # set all lines of the original buffer to a list 
   #map(bls, (_, v) => v .. ' ')   # add space to all elements of the list 
   command! Tateq call TateEnd()
@@ -657,6 +661,9 @@ def TateEnd()
   delcommand Tatec
   mapclear
 enddef
+
+g:loaded_ta = 1
+command! Ta call TateStart()
 
 var h = winheight(0)  # height of the window 
 var w = winwidth(0)   # width of the window 
