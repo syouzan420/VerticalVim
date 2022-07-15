@@ -510,7 +510,7 @@ def TateRubiStart()
     pl = pl - 1
   endif
   TateChange()
-  command! -nargs=1 Rubia call s:AppendRubi(<args>)
+  command! -nargs=1 Rubia call AppendRubi(<args>)
   vnoremap <buffer> r d<Esc>:Rubia '<C-R>"'<CR> 
   if chlen == 1
     feedkeys('vr')
@@ -595,7 +595,7 @@ enddef
 def TateIndexStart()
   TateChange()
   TateIndexShow()
-  ta#TateStart()
+  TateStart()
   command! Tatej call TateIndexJump()
   nnoremap <buffer> [ :Tatej
 enddef
@@ -620,7 +620,7 @@ def TateIndexAdd()
   else
     setline(lnum, (ind .. ':'))
   endif
-  ta#TateStart()
+  TateStart()
 enddef
 
 def TateIndexJump()
@@ -631,7 +631,7 @@ def TateIndexJump()
   bd!
   cursor(iils[l - 1], 1)
   delcommand Tatej
-  ta#TateStart()
+  TateStart()
 enddef
 
 def TateChange()
