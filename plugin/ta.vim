@@ -449,6 +449,7 @@ def TateStart()
   nnoremap <buffer> ] :Tatea
   nnoremap <buffer> o :Taten<CR>
   nnoremap <buffer> x :Tated<CR> 
+  nnoremap <buffer> v <C-v>
   vnoremap <buffer> <expr> r feedkeys('y:Tater<CR>') 
   ChangeToTate()
   augroup Tate 
