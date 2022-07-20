@@ -506,9 +506,9 @@ def TateRubiStart()
   if chlen > 2
     lmov = chlen - 2
   endif
-  if chlen == 1
-    pl = pl - 1
-  endif
+  #if chlen == 1
+  #  pl = pl - 1
+  #endif
   TateChange()
   command! -nargs=1 Rubia call AppendRubi(<args>)
   vnoremap <buffer> r d<Esc>:Rubia '<C-R>"'<CR> 
