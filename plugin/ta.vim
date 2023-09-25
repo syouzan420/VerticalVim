@@ -127,15 +127,33 @@ def ChangeChar(ch: string): string
   elseif cha == ') ' || cha == '）'
      cha = '⏝'              # 23dd
   elseif cha == '= '
-     cha = '꯫'              # 2225 or a831, abeb, 2016 (using abeb) 
+     cha = 'ǁ'
+    # cha = '∥'
+    # cha = '꯫'              # 2225 or a831, abeb, 2016 (using abeb) 
   elseif cha == '。'
-     cha = '︒'              # fe12
+     cha = '๏'              # (fe12)
+     #cha = 'ⵙ'              # 
   elseif cha == '、'
      cha = '︑'              # fe11
-  #elseif cha=='：'
-  #  cha = '‥ '
-  #elseif cha=='「'
-  #  cha = '⅂ '
+  elseif cha == ': '
+    cha = '⠉'
+  elseif cha == '：'
+    cha = '⚋'
+  elseif cha == '「'
+    cha = '⅂'
+  elseif cha == '〜'
+    cha = '⟅'
+  elseif cha == '. '
+    cha = '⠁'
+    #cha = '・'
+  elseif cha == '{ '
+    cha = '⏞'
+  elseif cha == '} '
+    cha = '⏟'
+  elseif cha == '＜'
+    cha = 'ⴷ'
+  elseif cha == '＞'
+    cha = 'ⴸ'
   endif
   return cha 
 enddef
@@ -270,7 +288,7 @@ enddef
 
 # CREATE FIELD ------------------------------------------------------------------
 def CreateField()
-  enew!
+  enew! 
   set nonumber
   set nofoldenable
   set scrolloff=0
@@ -646,7 +664,7 @@ def TateChange()
   normal dG 
   append(0, bls)     # append new data
   normal G
-  normal dd          # delete the last line
+  normal dd
   setcursorcharpos(y, x)
   delcommand Tateq
   delcommand Tatec
