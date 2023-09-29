@@ -31,7 +31,6 @@ var inls: list<string>
 # ------------------------------------------------------------------------
 
 # CHANGE TO TATE ---------------------------------------------------------
-# ---USING: h
 def ChangeToTate(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: number, l_msc: number, l_bls: list<string>): list<any>
   var l_pl: number
   var l_px: number
@@ -51,7 +50,6 @@ enddef
 # ------------------------------------------------------------------------
 
 # CONVERT LIST -----------------------------------------------------PURE--
-# ---USING: 
 def ConvertList(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: number, l_msc: number, l_bls: list<string>): list<any>
   var l_pl: number
   var l_px: number
@@ -62,7 +60,6 @@ def ConvertList(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: numb
   var l_tls = ChangeList(l_nls)
   return [l_pl, l_px, l_nls, l_tls, l_oln]
 enddef
-# ---CHANGING: 
 # ------------------------------------------------------------------------  
 
 # MAKE LIMITED STRING LIST -----------------------------------------PURE--
@@ -132,7 +129,6 @@ def AddSpacesToList(l_h: number, l_nls: list<string>): list<string>
   map(l_nls, (_, v) => AddSpaces(v, mxl))
   return l_nls
 enddef
-# ---CHANGING: nls
 # ------------------------------------------------------------------------
 
 # ADD SPACES -------------------------------------------------------PURE--
@@ -370,8 +366,7 @@ def ConvPos(l_h: number, l_pl: number, l_px: number, l_oln: list<number>): list<
 enddef
 # ------------------------------------------------------------------------
 
-# UPDATE TEXT ------------------------------------------------------------
-# ---USING: x, y, pl, px, fls, bls, bcr
+# UPDATE TEXT ----------------------------------------------CHANGE GLOBAL-
 # INPUT
 # bli : leave insert mode or not 
 def UpdateText(bli: bool)                     
@@ -458,8 +453,7 @@ def UpdateText(bli: bool)
 enddef
 # ------------------------------------------------------------------------
 
-# MOVE CURSOR ------------------------------------------------------------
-# ---USING: pl, px, scrl, msc
+# MOVE CURSOR ----------------------------------------------CHANGE GLOBAL-
 def MoveCursor()
   var cpos = getcurpos()
   const ncy = cpos[1]
