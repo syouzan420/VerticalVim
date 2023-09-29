@@ -8,83 +8,134 @@ if exists('g:loaded_ta')
   finish
 endif
 
-# CHANGE TO TATE -------------------------------------------------
-def ChangeToTate()
-  MakeNewList(h - 2)
-  ConvertList()
-enddef
-# --------------------------------------------------------------------------------
 
-# MAKE NEW LIST ------------------------------------------------------------------
-# INPUTS
-# hi : limit height which is the limit length of the output list (nls)
-def MakeNewList(hi: number)
+# GLOBAL VARIABLES --------------------------------------------------------
+var h = winheight(0)  # height of the window 
+var w = winwidth(0)   # width of the window (max string display width of the window)
+var bls: list<string> # all lines of the original buffer
+var nls: list<string> # list which length is limited to (h-2) (max line displayed)
+var tls: list<string> # list of each element corresponds to the displayable line
+var fls: list<string> # list of each element displayed now in Vertical Mode
+var y: number         # the current line which is on the cursor 
+var x: number         # character index of the line where the cursor is exist
+var cy: number        # cursor position y (Vertical Mode)
+var cx: number        # cursor position x (Vertical Mode)
+var pl: number        # index of the list (nls) corresponds to the cursor position
+var px: number        # index of the element of the list (nls) corresponds to the cursor position
+var scrl: number      # not-displayed character length of each element of the list (tls)
+var msc: number
+var oln: list<number> # list of each number (element) is corresponds to the line number of the original list (bls) (this list's length is the same as the nls list)
+var bcr = false     # whether Enter Key is pushed
+var iils: list<number>
+var inls: list<string>
+# ------------------------------------------------------------------------
+
+# CHANGE TO TATE ---------------------------------------------------------
+# ---USING: h
+def ChangeToTate(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: number, l_msc: number, l_bls: list<string>): list<any>
+  var l_pl: number
+  var l_px: number
+  var l_cy: number
+  var l_cx: number
+  var l_nls: list<string>
+  var l_tls: list<string>
+  var l_fls: list<string>
+  var l_oln: list<number>
+  var n_scrl: number
+  var n_msc: number
+  [l_pl, l_px, l_nls, l_tls, l_oln] = ConvertList(l_w, l_h, l_x, l_y, l_scrl, l_msc, l_bls)
+  [n_scrl, n_msc] = SetScroll(l_w, l_pl, l_scrl, l_msc, l_nls)
+  [l_cy, l_cx, l_fls] = ShowTate(l_w, l_pl, l_px, n_scrl, n_msc, l_tls)
+  return [l_pl, l_px, l_cy, l_cx, n_scrl, n_msc, l_nls, l_tls, l_fls, l_oln]
+enddef
+# ------------------------------------------------------------------------
+
+# CONVERT LIST -----------------------------------------------------PURE--
+# ---USING: 
+def ConvertList(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: number, l_msc: number, l_bls: list<string>): list<any>
+  var l_pl: number
+  var l_px: number
+  var l_nls: list<string>
+  var l_oln: list<number>
+  [l_pl, l_px, l_nls, l_oln] = MakeLimitedStringList(l_h - 2, l_x, l_y, l_bls)
+  l_nls = AddSpacesToList(l_h, l_nls)
+  var l_tls = ChangeList(l_nls)
+  return [l_pl, l_px, l_nls, l_tls, l_oln]
+enddef
+# ---CHANGING: 
+# ------------------------------------------------------------------------  
+
+# MAKE LIMITED STRING LIST -----------------------------------------PURE--
+def MakeLimitedStringList(hi: number, l_x: number, l_y: number, l_bls: list<string>): list<any>
   var c = 0
-  pl = y
-  var plf = pl
-  px = x
-  nls = []
-  oln = []              # original line number 
-  var m = len(bls)
+  var l_pl = l_y
+  const plf = l_pl
+  var l_px = l_x
+  var l_nls = []
+  var l_oln = []              # original line number 
+  var m = len(l_bls)
   while c < m
-    var el = bls[c]
+    var el = l_bls[c]
     var l = strchars(el)
     while l > hi
       if c + 1 < plf
-        pl = pl + 1
-      elseif (c + 1 == plf) && (px > hi)
-        pl = pl + 1
-        px = px - hi
+        l_pl = l_pl + 1
+      elseif (c + 1 == plf) && (l_px > hi)
+        l_pl = l_pl + 1
+        l_px = l_px - hi
       endif
       var fst = slice(el, 0, hi)
       el = slice(el, hi)
-      nls = nls + [fst]
-      oln = oln + [c + 1]
+      l_nls = l_nls + [fst]
+      l_oln = l_oln + [c + 1]
       l = strchars(el)
     endwhile
-    nls = nls + [el]
-    oln = oln + [c + 1]
+    l_nls = l_nls + [el]
+    l_oln = l_oln + [c + 1]
     c = c + 1
   endwhile
+  return [l_pl, l_px, l_nls, l_oln]
 enddef
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# CONVERT LIST -------------------------------------------------------------------
-def ConvertList()
-  AddSpacesToList()
-  ChangeList()
-  var mxl = len(nls)     # length of the list (max line numbers) 
-  var fl = mxl - pl      # number of lines from left to the cursor position
-  var lim = w / 2 - 4      # the display character length
-  var ex = pl
+# SET SCROLL--------------------------------------------------------PURE--
+def SetScroll(l_w: number, l_pl: number, l_scrl: number, l_msc: number, l_nls: list<string>): list<number>
+  var n_scrl = l_scrl 
+  var n_msc = l_msc
+  var mxl = len(l_nls)     # length of the list (max line numbers) 
+  var fl = mxl - l_pl      # number of lines from left to the cursor position
+  const lim = l_w / 2 - 4      # the display character length
+  var ex = l_pl
   if ex > 5
     ex = 4
   endif
-  if scrl == 0
+  if n_scrl == 0
     if fl > lim
-      scrl = fl - lim + ex 
+      n_scrl = fl - lim + ex 
     else
-      scrl = 0
+      n_scrl = 0
     endif
   endif
-  msc = mxl - lim 
-  if msc < 0
-    msc = 0
+  n_msc = mxl - lim 
+  if n_msc < 0
+    n_msc = 0
   endif
-  ShowTate()
+  return [n_scrl, n_msc]
 enddef
-# --------------------------------------------------------------------------------  
+# ---------------------------------------------------------------------------
 
-# ADD SPACES TO LIST--------------------------------------------------------------
-def AddSpacesToList()
-  var lst = copy(nls)
+# ADD SPACES TO LIST---------------------------------------------------PURE--
+def AddSpacesToList(l_h: number, l_nls: list<string>): list<string>
+  var lst = copy(l_nls)
   var nlst = mapnew(lst, (_, v) => strchars(v))
-  var mxl = h - 2
-  map(nls, (_, v) => AddSpaces(v, mxl))
+  var mxl = l_h - 2
+  map(l_nls, (_, v) => AddSpaces(v, mxl))
+  return l_nls
 enddef
-# --------------------------------------------------------------------------------
+# ---CHANGING: nls
+# ------------------------------------------------------------------------
 
-# ADD SPACES ---------------------------------------------------------------------
+# ADD SPACES -------------------------------------------------------PURE--
 # INPUTS
 # str : string (element of the list (nls))
 # mxl : max length of the list (nls)
@@ -96,22 +147,23 @@ def AddSpaces(str: string, mxl: number): string
 enddef
 # OUTPUT
 # str . sp : new element of the list which is the same length with mxl
-# --------------------------------------------------------------------------------
+# -----------------------------------------------------------------------
 
-# CHANGE LIST --------------------------------------------------------------------
-def ChangeList()
+# CHANGE LIST -----------------------------------------------------PURE--
+def ChangeList(l_nls: list<string>): list<string>
   var c = 0
-  tls = []
-  var m = strchars(nls[0])
+  var l_tls = []
+  var m = strchars(l_nls[0])
   while c < m 
-    var lst = copy(nls)
-    tls = add(tls, join(reverse(map(lst, (_, v) => ChangeChar(strcharpart(v, c, 1)))), ''))
+    var lst = copy(l_nls)
+    l_tls = add(l_tls, join(reverse(map(lst, (_, v) => ChangeChar(strcharpart(v, c, 1)))), ''))
     c = c + 1
   endwhile
+  return l_tls
 enddef
-# -------------------------------------------------------------------------------- 
+# ------------------------------------------------------------------------ 
 
-# CHANGE CHAR --------------------------------------------------------------------
+# CHANGE CHAR ------------------------------------------------------PURE--
 # INPUT
 # ch : character of the element of the list (tls)
 def ChangeChar(ch: string): string
@@ -161,29 +213,31 @@ enddef
 # cha : new string for the input character
 #       character display width = 1              => add space 
 #       character is not for vertical expression => change character
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# SHOW TATE ----------------------------------------------------------------------
-def ShowTate()
-  FitToWindow(w - 4)
-  setline(2, fls)
-  CursorSet()
+# SHOW TATE ---------------------------------------------------------IO---
+def ShowTate(l_w: number, l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_tls: list<string>): list<any>
+  var l_fls = FitToWindow(l_w - 4, l_scrl, l_tls)
+  setline(2, l_fls)
+  var l_cy: number
+  var l_cx: number
+  [l_cy, l_cx] = CursorSet(l_pl, l_px, l_scrl, l_msc, l_fls)
+  return [l_cy, l_cx, l_fls]
 enddef
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# FIT TO WINDOW ------------------------------------------------------------------
-# INPUTS
-# wi  : displaying line width (string character width)
-def FitToWindow(wi: number)
-  var mcs = DisplayableLength(tls[0]) 
-  var lst = copy(tls)
-  map(lst, (_, v) => FitElmToWindow(v, mcs, wi))
+# FIT TO WINDOW ----------------------------------------------------PURE--
+def FitToWindow(wi: number, l_scrl: number, l_tls: list<string>): list<string>
+  var mcs = DisplayableLength(l_tls[0]) 
+  var lst = copy(l_tls)
+  map(lst, (_, v) => FitElmToWindow(v, mcs, wi, l_scrl))
   map(lst, (_, v) => '  ' .. v)  # add 2 spaces at the first of each element of the list
-  fls = lst + [repeat(' ', (wi - 2))]
+  var l_fls = lst + [repeat(' ', (wi - 2))]
+  return l_fls
 enddef
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# DISPLAYABLE LENGTH -------------------------------------------------------------
+# DISPLAYABLE LENGTH -----------------------------------------------PURE--
 # INPUT
 # str : string
 def DisplayableLength(str: string): number
@@ -202,14 +256,14 @@ def DisplayableLength(str: string): number
 enddef
 # OUTPUT
 # l : sum of the display width
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# FIT ELM TO WINOW ---------------------------------------------------------------
+# FIT ELM TO WINOW -------------------------------------------------PURE--
 # INPUTS
 # el : element of the list (tls)
 # mcs : displayable length
 # wi  : displaying line width (string character width)
-def FitElmToWindow(el: string, mcs: number, wi: number): string
+def FitElmToWindow(el: string, mcs: number, wi: number, l_scrl: number): string
   var nel: string
   var ch: string
   var dw: number
@@ -218,7 +272,7 @@ def FitElmToWindow(el: string, mcs: number, wi: number): string
     nel = '' 
     var c = 0
     var n = 0
-    while n < (wi / 2 - 2 + scrl)
+    while n < (wi / 2 - 2 + l_scrl)
       ch = el[c]
       sl = strlen(ch)
       if sl == 1                      # if string byte length is 1
@@ -234,7 +288,7 @@ def FitElmToWindow(el: string, mcs: number, wi: number): string
          endif
       endif
       n = n + 1
-      if n > scrl
+      if n > l_scrl
         nel = nel .. ch
       endif
     endwhile
@@ -247,22 +301,23 @@ def FitElmToWindow(el: string, mcs: number, wi: number): string
 enddef
 # OUTPUT
 # nel : new element with length fit to the window column size 
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# CURSOR SET ---------------------------------------------------------------------
-def CursorSet()
-  var co = GetGyou()
-  cy = px + 1
-  cursor(cy, 1)
-  cx = col('$') - co
-  cursor(cy, cx)
+# CURSOR SET --------------------------------------------------------IO---
+def CursorSet(l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_fls: list<string>): list<number>
+  var co = GetGyou(l_pl, l_px, l_scrl, l_msc, l_fls)
+  var l_cy = l_px + 1
+  cursor(l_cy, 1)
+  var l_cx = col('$') - co
+  cursor(l_cy, l_cx)
+  return [l_cy, l_cx]
 enddef
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# GET GYOU
-def GetGyou(): number
-  var str = fls[px - 1]
-  var dlp = pl - msc + scrl
+# GET GYOU ---------------------------------------------------------PURE--
+def GetGyou(l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_fls: list<string>): number
+  var str = l_fls[l_px - 1]
+  var dlp = l_pl - l_msc + l_scrl
   var sl = strchars(str)
   var co = 0
   var n = 0
@@ -284,43 +339,48 @@ def GetGyou(): number
 enddef
 # OUTPUT
 # co : column length from the right limit to the cursor position  
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# CREATE FIELD ------------------------------------------------------------------
-def CreateField()
+# CREATE FIELD ------------------------------------------------------IO---
+def CreateField(l_h: number)
   enew! 
   set nonumber
   set nofoldenable
   set scrolloff=0
-  const ls = repeat([' '], h - 1)
+  const ls = repeat([' '], l_h - 1)
   append(1, ls)
   bp!
 enddef
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-# CONV POS -----------------------------------------------------------------------
-def ConvPos()
-  const ml = h - 2  # max length
-  y = oln[pl - 1]
+# CONV POS ---------------------------------------------------------PURE--
+def ConvPos(l_h: number, l_pl: number, l_px: number, l_oln: list<number>): list<number>
+  const ml = l_h - 2  # max length
+  var n_y = l_oln[l_pl - 1]
   var i = 1
-  x = px  
-  while oln[pl - 1 - i] == y && (pl - i) > 0 
-    x = x + ml
+  var n_x = l_px  
+  while l_oln[l_pl - 1 - i] == n_y && (l_pl - i) > 0 
+    n_x = n_x + ml
     i = i + 1
-    if (pl - 1 - i) < 0
+    if (l_pl - 1 - i) < 0
       break
     endif
   endwhile
+  return [n_x, n_y]
 enddef
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-def UpdateText(bli: bool)                     # bli : leave insert mode or not
+# UPDATE TEXT ------------------------------------------------------------
+# ---USING: x, y, pl, px, fls, bls, bcr
+# INPUT
+# bli : leave insert mode or not 
+def UpdateText(bli: bool)                     
   var icr = px != (line('.') - 1)             # whether <CR> is entered or not
   var tl: string
   var tnl: string
   var heads: string
   var tail: string
-  ConvPos()
+  [x, y] = ConvPos(h, pl, px, oln)
   if icr 
     bcr = true
     setline(len(fls) + 2, " ")
@@ -392,11 +452,14 @@ def UpdateText(bli: bool)                     # bli : leave insert mode or not
     endif
     bcr = false
   endif
-  ChangeToTate()
+  [pl, px, cy, cx, scrl, msc, nls, tls, fls, oln] = ChangeToTate(w, h, x, y, scrl, msc, bls)
   var status = "pl=" .. pl .. " px=" .. px .. " cy=" .. cy .. " cx=" .. cx .. " s=" .. scrl .. " m=" .. msc
   setline(1, status)
 enddef
+# ------------------------------------------------------------------------
 
+# MOVE CURSOR ------------------------------------------------------------
+# ---USING: pl, px, scrl, msc
 def MoveCursor()
   var cpos = getcurpos()
   const ncy = cpos[1]
@@ -406,46 +469,50 @@ def MoveCursor()
     if ncy == 1
       px = 1
     endif
-    CursorSet()
+    [cy, cx] = CursorSet(pl, px, scrl, msc, fls)
   elseif cy < ncy               # cursor move down
     px = px + 1
     if ncy == h
       px = px - 1
     endif
-    CursorSet() 
+    [cy, cx] = CursorSet(pl, px, scrl, msc, fls) 
   elseif cx > ncx               # cursor move left
     if ncx > 2
       pl = pl + 1
     endif
     if scrl > 0 && ncx < 10
       scrl = scrl - 1
-      ShowTate()
+      [cy, cx, fls] = ShowTate(w, pl, px, scrl, msc, tls)
     else
       if pl > len(nls)
         pl = pl - 1
       endif
-      CursorSet()
+      [cy, cx] = CursorSet(pl, px, scrl, msc, fls)
     endif
   elseif cx < ncx             # cursor move right
     pl = pl - 1
     if msc > scrl && ncx > (col('$') - 10)
       scrl = scrl + 1
-      ShowTate()
+      [cy, cx, fls] = ShowTate(w, pl, px, scrl, msc, tls)
     else
       if pl == 0
         pl = pl + 1
         cx = cx + 1
       endif
-      CursorSet()
+      [cy, cx] = CursorSet(pl, px, scrl, msc, fls)
     endif
   endif
   var status = "pl=" .. pl .. " px=" .. px .. " cy=" .. cy .. " cx=" .. cx .. " s=" .. scrl .. " m=" .. msc
   setline(1, status)
 enddef
+# ------------------------------------------------------------------------
 
 def TateStart()
   bls = getline(1, line("$"))  # set all lines of the original buffer to a list 
-  #map(bls, (_, v) => v .. ' ')   # add space to all elements of the list 
+  y = line('.')       # the current line which is on the cursor 
+  x = charcol('.')    # character index of the line where the cursor is exist 
+  CreateField(h)    # create new buffer, make empty lines and return to the original buffer 
+  bn!               # move to the buffer created for vertical input
   command! Tateq call TateEnd()
   command! Tatec call TateChange()
   command! Tatei call TateIndexStart()
@@ -453,14 +520,6 @@ def TateStart()
   command! Tater call TateRubiStart()
   command! Taten call NewLine()
   command! Tated call DelLetter()
-  y = line('.')       # the current line which is on the cursor 
-  x = charcol('.')    # character index of the line where the cursor is exist 
-  pl = 0
-  px = 0
-  scrl = 0
-  # create new buffer, make empty lines and return to the original buffer 
-  CreateField() 
-  bn!                               # move to the buffer created for vertical input
   nnoremap <buffer> q :Tateq
   nnoremap <buffer> w :Tatec
   nnoremap <buffer> [ :Tatei
@@ -469,13 +528,16 @@ def TateStart()
   nnoremap <buffer> x :Tated<CR> 
   nnoremap <buffer> v <C-v>
   vnoremap <buffer> <expr> r feedkeys('y:Tater<CR>') 
-  ChangeToTate()
   augroup Tate 
     autocmd!
     autocmd InsertLeave * UpdateText(true)
     autocmd TextChangedI * UpdateText(false)
     autocmd CursorMoved * MoveCursor()
   augroup END
+  pl = 0
+  px = 0
+  scrl = 0
+  [pl, px, cy, cx, scrl, msc, nls, tls, fls, oln] = ChangeToTate(w, h, x, y, scrl, msc, bls)
 enddef
 
 def NewLine()
@@ -657,7 +719,7 @@ def TateChange()
   augroup Tate 
     autocmd!
   augroup END
-  ConvPos()
+  [x, y] = ConvPos(h, pl, px, oln)
   bd!                     # return the original buffer
   # clear the buffer
   normal 1G
@@ -684,21 +746,3 @@ enddef
 g:loaded_ta = 1
 command! Ta call TateStart()
 
-var h = winheight(0)  # height of the window 
-var w = winwidth(0)   # width of the window 
-var bls: list<string>
-var nls: list<string>
-var tls: list<string>
-var fls: list<string>
-var y: number
-var x: number
-var cy: number
-var cx: number
-var pl: number
-var px: number
-var scrl: number
-var msc: number
-var oln: list<number>
-var bcr = false     # whether Enter Key is pushed
-var iils: list<number>
-var inls: list<string>
