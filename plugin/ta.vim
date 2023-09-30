@@ -8,8 +8,10 @@ if exists('g:loaded_ta')
   finish
 endif
 
+g:loaded_ta = 1
+command! Ta call TateStart()
 
-# GLOBAL VARIABLES --------------------------------------------------------
+# GLOBAL VARIABLES ---------------------------------------------------
 var h = winheight(0)  # height of the window 
 var w = winwidth(0)   # width of the window (max string display width of the window)
 var bls: list<string> # all lines of the original buffer
@@ -26,11 +28,11 @@ var scrl: number      # not-displayed character length of each element of the li
 var msc: number
 var oln: list<number> # list of each number (element) is corresponds to the line number of the original list (bls) (this list's length is the same as the nls list)
 var bcr = false     # whether Enter Key is pushed
-var iils: list<number>
-var inls: list<string>
-# ------------------------------------------------------------------------
+var iils: list<number> # index number list
+var inls: list<string> # index name list
+# --------------------------------------------------------------------
 
-# CHANGE TO TATE ---------------------------------------------------------
+# CHANGE TO TATE -----------------------------------------------------
 def ChangeToTate(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: number, l_msc: number, l_bls: list<string>): list<any>
   var l_pl: number
   var l_px: number
@@ -47,9 +49,9 @@ def ChangeToTate(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: num
   [l_cy, l_cx, l_fls] = ShowTate(l_w, l_pl, l_px, n_scrl, n_msc, l_tls)
   return [l_pl, l_px, l_cy, l_cx, n_scrl, n_msc, l_nls, l_tls, l_fls, l_oln]
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# CONVERT LIST -----------------------------------------------------PURE--
+# CONVERT LIST ------------------------------------------------PURE---
 def ConvertList(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: number, l_msc: number, l_bls: list<string>): list<any>
   var l_pl: number
   var l_px: number
@@ -60,9 +62,9 @@ def ConvertList(l_w: number, l_h: number, l_x: number, l_y: number, l_scrl: numb
   var l_tls = ChangeList(l_nls)
   return [l_pl, l_px, l_nls, l_tls, l_oln]
 enddef
-# ------------------------------------------------------------------------  
+# --------------------------------------------------------------------  
 
-# MAKE LIMITED STRING LIST -----------------------------------------PURE--
+# MAKE LIMITED STRING LIST ------------------------------------PURE---
 def MakeLimitedStringList(hi: number, l_x: number, l_y: number, l_bls: list<string>): list<any>
   var c = 0
   var l_pl = l_y
@@ -93,9 +95,9 @@ def MakeLimitedStringList(hi: number, l_x: number, l_y: number, l_bls: list<stri
   endwhile
   return [l_pl, l_px, l_nls, l_oln]
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# SET SCROLL--------------------------------------------------------PURE--
+# SET SCROLL---------------------------------------------------PURE---
 def SetScroll(l_w: number, l_pl: number, l_scrl: number, l_msc: number, l_nls: list<string>): list<number>
   var n_scrl = l_scrl 
   var n_msc = l_msc
@@ -119,9 +121,9 @@ def SetScroll(l_w: number, l_pl: number, l_scrl: number, l_msc: number, l_nls: l
   endif
   return [n_scrl, n_msc]
 enddef
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# ADD SPACES TO LIST---------------------------------------------------PURE--
+# ADD SPACES TO LIST-------------------------------------------PURE---
 def AddSpacesToList(l_h: number, l_nls: list<string>): list<string>
   var lst = copy(l_nls)
   var nlst = mapnew(lst, (_, v) => strchars(v))
@@ -129,9 +131,9 @@ def AddSpacesToList(l_h: number, l_nls: list<string>): list<string>
   map(l_nls, (_, v) => AddSpaces(v, mxl))
   return l_nls
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# ADD SPACES -------------------------------------------------------PURE--
+# ADD SPACES --------------------------------------------------PURE---
 # INPUTS
 # str : string (element of the list (nls))
 # mxl : max length of the list (nls)
@@ -143,9 +145,9 @@ def AddSpaces(str: string, mxl: number): string
 enddef
 # OUTPUT
 # str . sp : new element of the list which is the same length with mxl
-# -----------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# CHANGE LIST -----------------------------------------------------PURE--
+# CHANGE LIST -------------------------------------------------PURE---
 def ChangeList(l_nls: list<string>): list<string>
   var c = 0
   var l_tls = []
@@ -157,9 +159,9 @@ def ChangeList(l_nls: list<string>): list<string>
   endwhile
   return l_tls
 enddef
-# ------------------------------------------------------------------------ 
+# -------------------------------------------------------------------- 
 
-# CHANGE CHAR ------------------------------------------------------PURE--
+# CHANGE CHAR -------------------------------------------------PURE---
 # INPUT
 # ch : character of the element of the list (tls)
 def ChangeChar(ch: string): string
@@ -171,20 +173,25 @@ def ChangeChar(ch: string): string
   if cha == 'ー'
      cha = '｜'
   elseif cha == '( ' || cha == '（'
-     cha = '⏜'              # 23dc (in insert mode Ctrl-v u and input this HEX)
+     cha = '⏜'              
   elseif cha == ') ' || cha == '）'
-     cha = '⏝'              # 23dd
+     cha = '⏝'              
   elseif cha == '= '
      cha = 'ǁ'
     # cha = '∥'
-    # cha = '꯫'              # 2225 or a831, abeb, 2016 (using abeb) 
+    # cha = '꯫'               
   elseif cha == '。'
-     cha = '๏'              # (fe12)
-     #cha = 'ⵙ'              # 
+     cha = '๏'              
+     #cha = 'ⵙ'               
   elseif cha == '、'
-     cha = '︑'              # fe11
+     cha = '︑'              
   elseif cha == ': '
-    cha = '⠉'
+     #cha = '..'
+     #cha = '〰'
+     #cha = 'ⵆ'
+     #cha = '꓆'
+     #cha = '¨'
+     cha = '⠉'
   elseif cha == '：'
     cha = '⚋'
   elseif cha == '「'
@@ -209,9 +216,9 @@ enddef
 # cha : new string for the input character
 #       character display width = 1              => add space 
 #       character is not for vertical expression => change character
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# SHOW TATE ---------------------------------------------------------IO---
+# SHOW TATE -----------------------------------------------------IO---
 def ShowTate(l_w: number, l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_tls: list<string>): list<any>
   var l_fls = FitToWindow(l_w - 4, l_scrl, l_tls)
   setline(2, l_fls)
@@ -220,9 +227,9 @@ def ShowTate(l_w: number, l_pl: number, l_px: number, l_scrl: number, l_msc: num
   [l_cy, l_cx] = CursorSet(l_pl, l_px, l_scrl, l_msc, l_fls)
   return [l_cy, l_cx, l_fls]
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# FIT TO WINDOW ----------------------------------------------------PURE--
+# FIT TO WINDOW -----------------------------------------------PURE---
 def FitToWindow(wi: number, l_scrl: number, l_tls: list<string>): list<string>
   var mcs = DisplayableLength(l_tls[0]) 
   var lst = copy(l_tls)
@@ -231,9 +238,9 @@ def FitToWindow(wi: number, l_scrl: number, l_tls: list<string>): list<string>
   var l_fls = lst + [repeat(' ', (wi - 2))]
   return l_fls
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# DISPLAYABLE LENGTH -----------------------------------------------PURE--
+# DISPLAYABLE LENGTH ------------------------------------------PURE---
 # INPUT
 # str : string
 def DisplayableLength(str: string): number
@@ -252,9 +259,9 @@ def DisplayableLength(str: string): number
 enddef
 # OUTPUT
 # l : sum of the display width
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# FIT ELM TO WINOW -------------------------------------------------PURE--
+# FIT ELM TO WINOW --------------------------------------------PURE---
 # INPUTS
 # el : element of the list (tls)
 # mcs : displayable length
@@ -297,9 +304,9 @@ def FitElmToWindow(el: string, mcs: number, wi: number, l_scrl: number): string
 enddef
 # OUTPUT
 # nel : new element with length fit to the window column size 
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# CURSOR SET --------------------------------------------------------IO---
+# CURSOR SET ----------------------------------------------------IO---
 def CursorSet(l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_fls: list<string>): list<number>
   var co = GetGyou(l_pl, l_px, l_scrl, l_msc, l_fls)
   var l_cy = l_px + 1
@@ -308,9 +315,9 @@ def CursorSet(l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_fls: 
   cursor(l_cy, l_cx)
   return [l_cy, l_cx]
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# GET GYOU ---------------------------------------------------------PURE--
+# GET GYOU ----------------------------------------------------PURE---
 def GetGyou(l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_fls: list<string>): number
   var str = l_fls[l_px - 1]
   var dlp = l_pl - l_msc + l_scrl
@@ -335,9 +342,9 @@ def GetGyou(l_pl: number, l_px: number, l_scrl: number, l_msc: number, l_fls: li
 enddef
 # OUTPUT
 # co : column length from the right limit to the cursor position  
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# CREATE FIELD ------------------------------------------------------IO---
+# CREATE FIELD --------------------------------------------------IO---
 def CreateField(l_h: number)
   enew! 
   set nonumber
@@ -347,9 +354,9 @@ def CreateField(l_h: number)
   append(1, ls)
   bp!
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# CONV POS ---------------------------------------------------------PURE--
+# CONV POS ----------------------------------------------------PURE---
 def ConvPos(l_h: number, l_pl: number, l_px: number, l_oln: list<number>): list<number>
   const ml = l_h - 2  # max length
   var n_y = l_oln[l_pl - 1]
@@ -364,9 +371,9 @@ def ConvPos(l_h: number, l_pl: number, l_px: number, l_oln: list<number>): list<
   endwhile
   return [n_x, n_y]
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# UPDATE TEXT ----------------------------------------------CHANGE GLOBAL-
+# UPDATE TEXT ----------------------------------------CHANGE GLOBAL---
 # INPUT
 # bli : leave insert mode or not 
 def UpdateText(bli: bool)                     
@@ -451,9 +458,9 @@ def UpdateText(bli: bool)
   var status = "pl=" .. pl .. " px=" .. px .. " cy=" .. cy .. " cx=" .. cx .. " s=" .. scrl .. " m=" .. msc
   setline(1, status)
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
-# MOVE CURSOR ----------------------------------------------CHANGE GLOBAL-
+# MOVE CURSOR ----------------------------------------CHANGE GLOBAL---
 def MoveCursor()
   var cpos = getcurpos()
   const ncy = cpos[1]
@@ -499,8 +506,9 @@ def MoveCursor()
   var status = "pl=" .. pl .. " px=" .. px .. " cy=" .. cy .. " cx=" .. cx .. " s=" .. scrl .. " m=" .. msc
   setline(1, status)
 enddef
-# ------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
+# TATE START --------------------------------------------------MAIN---
 def TateStart()
   bls = getline(1, line("$"))  # set all lines of the original buffer to a list 
   y = line('.')       # the current line which is on the cursor 
@@ -534,17 +542,22 @@ def TateStart()
   [pl, px, cy, cx, scrl, msc, nls, tls, fls, oln] = ChangeToTate(w, h, x, y, scrl, msc, bls)
 enddef
 
+# NEW LINE -----------------------------------------------------COM---
 def NewLine()
   TateChange()
   feedkeys("o\<Esc>")
   feedkeys(":Ta\<CR>i")
 enddef
+# --------------------------------------------------------------------
 
+# DEL LETTER ---------------------------------------------------COM---
 def DelLetter()
   feedkeys("hji\<BS>")
   UpdateText(false)
 enddef
+# --------------------------------------------------------------------
 
+# APPEND RUBI --------------------------------------------------------
 def AppendRubi(moji: string)
   var l = strchars(moji)
   var rb = input(moji .. ':')
@@ -570,7 +583,9 @@ def AppendRubi(moji: string)
   feedkeys('P') 
   echo ".. :push enter"
 enddef
+# --------------------------------------------------------------------
 
+# TATE RUBI START ----------------------------------------------COM---
 def TateRubiStart()
   var rg = @"
   var rgl = split(rg, '\n')
@@ -596,7 +611,9 @@ def TateRubiStart()
   endif
   nnoremap <buffer> <CR> :Ta<CR>
 enddef
+# --------------------------------------------------------------------
 
+# INDEX LINE --------------------------------------------------PURE---
 def IndexLine(ind: number, str: string): list<any>
   var n = strchars(str)
   var rin = 0
@@ -610,14 +627,16 @@ def IndexLine(ind: number, str: string): list<any>
       tstr = slice(tstr, 0, n)
     elseif lch == ':'
       rin = ind
-      rsl = tstr
+      rsl = slice(tstr, 0, -1)
     else
       n = 0
     endif
   endwhile
   return [rin, rsl] 
 enddef
+# --------------------------------------------------------------------
 
+# INDEX TEXT --------------------------------------------------PURE---
 def IndexText(ls: list<string>): list<any>
   var i = 1
   var rl = []
@@ -625,13 +644,15 @@ def IndexText(ls: list<string>): list<any>
     rl = IndexLine(i, val)
     if rl[1] != ""
       add(iils, i)
-      add(inls, val)
+      add(inls, rl[1])
     endif
     i += 1
   endfor
   return [iils, inls]
 enddef
+# --------------------------------------------------------------------
 
+# LINE TYPE ---------------------------------------------------PURE---
 def LineType(str: string): string 
   var n = strchars(str)
   var tstr = str
@@ -654,19 +675,21 @@ def LineType(str: string): string
   endif
   return tstr
 enddef
+# --------------------------------------------------------------------
 
+# TATE INDEX SHOW ----------------------------------------------------
 def TateIndexShow()
   iils = []
   inls = []
   bls = getline(1, line("$"))
   enew!
-  var result = IndexText(bls)
-  iils = result[0]
-  inls = result[1]
+  [iils, inls] = IndexText(bls)
   append(0, inls)
   cursor(1, 1)
 enddef
+# --------------------------------------------------------------------
 
+# TATE INDEX START ---------------------------------------------COM---
 def TateIndexStart()
   TateChange()
   TateIndexShow()
@@ -674,7 +697,9 @@ def TateIndexStart()
   command! Tatej call TateIndexJump()
   nnoremap <buffer> [ :Tatej
 enddef
+# --------------------------------------------------------------------
 
+# TATE INDEX ADD -----------------------------------------------COM---
 def TateIndexAdd()
   TateChange()
   var ind = input('Index Name = ')
@@ -697,7 +722,9 @@ def TateIndexAdd()
   endif
   TateStart()
 enddef
+# --------------------------------------------------------------------
 
+# TATE INDEX JUMP ----------------------------------------------COM---
 def TateIndexJump()
   TateEnd()
   TateIndexShow() 
@@ -708,7 +735,9 @@ def TateIndexJump()
   delcommand Tatej
   TateStart()
 enddef
+# --------------------------------------------------------------------
 
+# TATE CHANGE --------------------------------------------------COM---
 def TateChange()
   augroup Tate 
     autocmd!
@@ -726,7 +755,9 @@ def TateChange()
   delcommand Tatec
   mapclear
 enddef
+# --------------------------------------------------------------------
 
+# TATE END -----------------------------------------------------COM---
 def TateEnd()
   augroup Tate 
     autocmd!
@@ -736,7 +767,5 @@ def TateEnd()
   delcommand Tatec
   mapclear
 enddef
-
-g:loaded_ta = 1
-command! Ta call TateStart()
+# --------------------------------------------------------------------
 
