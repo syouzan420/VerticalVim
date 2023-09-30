@@ -115,7 +115,7 @@ def SetScroll(l_w: number, l_pl: number, l_scrl: number, l_msc: number, l_nls: l
       n_scrl = 0
     endif
   endif
-  n_msc = mxl - lim 
+  n_msc = mxl - lim
   if n_msc < 0
     n_msc = 0
   endif
@@ -552,8 +552,24 @@ enddef
 
 # DEL LETTER ---------------------------------------------------COM---
 def DelLetter()
-  feedkeys("hji\<BS>")
-  UpdateText(false)
+  var l = len(bls)
+  var n = len(nls)
+  [x, y] = ConvPos(h, pl, px, oln)
+  var initL = slice(bls, 0, y - 1)
+  var tgt = bls[y - 1]
+  var tailL = slice(bls, y)
+  var initT = slice(tgt, 0, x - 1)
+  var tailT = slice(tgt, x)
+  var ntgt = initT .. tailT
+  bls = initL + [ntgt] + tailL
+  [pl, px, cy, cx, scrl, msc, nls, tls, fls, oln] = ChangeToTate(w, h, x, y, scrl, msc, bls)
+  var n2 = len(nls)
+  if y > 1
+    feedkeys("h")
+  endif
+  if n != n2
+    scrl = scrl - 1
+  endif
 enddef
 # --------------------------------------------------------------------
 
