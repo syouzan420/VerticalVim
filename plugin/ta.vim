@@ -177,36 +177,36 @@ def ChangeChar(ch: string): string
   elseif cha == ') ' || cha == '）'
      cha = '⏝'              
   elseif cha == '= '
-     cha = 'ǁ'
+     cha = 'ǁ'  #strlen:2 ,strdisplaywidth:1
     # cha = '∥'
     # cha = '꯫'               
   elseif cha == '。'
-     cha = '๏'              
+     cha = '๏'       #strlen:3, strdisplaywidth:1       
      #cha = 'ⵙ'               
   elseif cha == '、'
-     cha = '︑'              
+     cha = '︑'  #strlen:3, strdisplaywidth:2             
   elseif cha == ': '
      #cha = '..'
      #cha = '〰'
      #cha = 'ⵆ'
      #cha = '꓆'
      #cha = '¨'
-     cha = '⠉'
+     cha = '⠉' #strlen:3, strdisplaywidth:1
   elseif cha == '：'
-    cha = '⚋'
+    cha = '⚋' #strlen:3, strdisplaywidth:1
   elseif cha == '「'
-    cha = '⅂'
+    cha = '⅂' #strlen:3, strdisplaywidth:1
   elseif cha == '〜'
-    cha = '⟅'
+    cha = '⟅' #strlen:3, strdisplaywidth:1
   elseif cha == '. '
-    cha = '⠁'
+    cha = '⠁' #strlen:3, strdisplaywidth:1
     #cha = '・'
   elseif cha == '{ '
-    cha = '⏞'
+    cha = '⏞' #strlen:3, strdisplaywidth:1
   elseif cha == '} '
     cha = '⏟'
   elseif cha == '＜'
-    cha = 'ⴷ'
+    cha = 'ⴷ' #strlen:3, strdisplaywidth:1
   elseif cha == '＞'
     cha = 'ⴸ'
   endif
@@ -295,10 +295,30 @@ def FitElmToWindow(el: string, mcs: number, wi: number, l_scrl: number): string
         nel = nel .. ch
       endif
     endwhile
-  elseif mcs < wi
-    nel = repeat(' ', (wi - mcs - 4)) .. el 
-  else 
-    nel = el
+  else
+    nel = '' 
+    var c = 0
+    const l = strchars(el) 
+    while c < l 
+      ch = el[c]
+      sl = strlen(ch)
+      if sl == 1                      # if string byte length is 1
+        ch = el[c : c + 1]            # there is a space just right to the character 
+        c = c + 2                     # so these two characters should be in
+      else
+        dw = strdisplaywidth(ch)       
+         if dw == 1                   # if string display width is 1 and byte length isn't 1
+           ch = ch .. ' '             # a space should be add and change display width to 2 
+           c = c + 1
+         else
+          c = c + 1
+         endif
+      endif
+      nel = nel .. ch
+    endwhile
+    if mcs < wi
+      nel = repeat(' ', (wi - mcs - 4)) .. nel 
+    endif
   endif
   return nel 
 enddef
@@ -612,9 +632,9 @@ def TateRubiStart()
   if chlen > 2
     lmov = chlen - 2
   endif
-  #if chlen == 1
-  #  pl = pl - 1
-  #endif
+  if chlen == 1
+    pl = pl - 1
+  endif
   TateChange()
   command! -nargs=1 Rubia call AppendRubi(<args>)
   vnoremap <buffer> r d<Esc>:Rubia '<C-R>"'<CR> 
