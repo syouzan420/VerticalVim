@@ -17,3 +17,4 @@ call dein#add('syouzan420/VerticalVim')
 を加へてください  
 コマンド :call dein#install()  
 で インストールできると思ひます
+![Screenshot from 2023-11-23 23-13-17](https://github.com/syouzan420/VerticalVim/assets/12661196/cb94acb5-97ab-4fda-8f86-6b2928cecf88)
